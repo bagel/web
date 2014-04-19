@@ -3,6 +3,9 @@ import os
 import re
 
 def execute(environ, route, template=""):
+    """Eval function by route, route: {"/test": ("test", "response")},
+    route's key is url regex. If url match PATH_INFO, then values[0] will
+    be imported and values[2] will execute."""
     app_route = ()
     for k, v in route.iteritems():
         if re.match(re.compile(k), environ['PATH_INFO']):
@@ -15,8 +18,13 @@ def execute(environ, route, template=""):
     app_route_sp.remove(app_module)
     app_dir = '/'.join(app_route_sp)
     app_path = os.path.join(environ["DOCUMENT_ROOT"], app_dir)
-    if app_path and app_path not in sys.path:
+    if environ["HTTP_HOST"] in sys.path[0]:
+        sys.path.pop(0)
+    if app_path not in sys.path:
         sys.path.insert(0, app_path)
+    #modules same name error fix
+    #if app_module in sys.modules.keys():
+    #    sys.modules.pop(app_module)
     exec('import %s' % app_module)
     app_route_len = len(app_route)
     if app_route_len == 1:
