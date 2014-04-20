@@ -78,23 +78,27 @@ class Template(object):
     def tempRegex(self):
         """compile regular expression pattern"""
         signs = "#\$+%"
-        self.regex = re.compile('.*{[%s]+\s*(.*)[%s]+}.*\n' % (signs, signs))
+        self.regex = re.compile('{[%s]+\s*(.*)[%s]+}' % (signs, signs))
         self.regexInclude = re.compile('{#\s*(.*)#}')
         self.regexDefine = re.compile('{\+\s*(.*)\+}')
         self.regexContent = re.compile('{%\s*(.*)%}')
         self.regexContentEnd = re.compile('{%\s*end\s*%}')
         self.regexScript = re.compile('<script\s+type="text/python">')
         self.regexScriptEnd = re.compile('</script>')
-        self.regexValue = re.compile('.*({\$\s*.*\$}).*\n')
+        self.regexValue = re.compile('({\$\s*.*\$})')
         self.regexSpace = re.compile('\s+$')
 
     def tempFind(self, line):
         """find vaule in {# value #}"""
-        return self.regex.sub(r'\1', line).strip()
+        #return self.regex.sub(r'\1', line).strip() #sub slow
+        return self.regex.findall(line)[0].strip()
 
     def tempExecValue(self, line):
         """replace {$ ... $} with value"""
-        return line.replace(self.regexValue.sub(r'\1', line), self.temp_value[self.tempFind(line)])
+        vals = self.regexValue.findall(line)
+        for v in vals:
+            line = line.replace(v, str(self.temp_value[self.tempFind(v)]))
+        return line
 
     def tempExecScript(self, f):
         """execute script in html template"""
@@ -111,6 +115,7 @@ class Template(object):
             line = f.readline()
         f1.seek(0, 0)
         res = ""
+        Tdict = self.temp_value
         exec(f1.read())
         return res
 
@@ -159,7 +164,6 @@ class Template(object):
         while line:
             if self.regexValue.search(line): #replace value
                 line = self.tempExecValue(line)
-                continue
             if self.regexScript.match(line): #execute script
                 f2 = cStringIO.StringIO()
                 line = f1.readline()
