@@ -1,4 +1,4 @@
 pyweb
 =====
 
-python lightweight web framwork
+simple and lightweight python web framwork.
