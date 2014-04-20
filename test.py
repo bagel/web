@@ -9,8 +9,8 @@ def template_test():
         ],
         "APP_PATH": "/data1/www/htdocs/admin.dpool.cluster.sina.com.cn/app/info"
     }
-    print web.template(environ, "info.html", {"user": ""})
+    return web.template(environ, "info.html", {"user": ""})
 
 
 if __name__ == "__main__":
-    template_test()
+    print template_test()

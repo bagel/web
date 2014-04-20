@@ -69,7 +69,6 @@ class Template(object):
     def tempFile(self, tempfile):
         """find template file from template dirs"""
         temp_file = ''
-        print self.temp_path
         for path in self.temp_path:
             if tempfile in os.listdir(path):
                 temp_file = os.path.join(path, tempfile)
@@ -78,15 +77,15 @@ class Template(object):
 
     def tempRegex(self):
         """compile regular expression pattern"""
-        signs = "#$+%"
-        self.regex = re.compile('{[%s]+\s*(.*)[%s]+}' % (signs, signs))
+        signs = "#\$+%"
+        self.regex = re.compile('.*{[%s]+\s*(.*)[%s]+}.*\n' % (signs, signs))
         self.regexInclude = re.compile('{#\s*(.*)#}')
         self.regexDefine = re.compile('{\+\s*(.*)\+}')
         self.regexContent = re.compile('{%\s*(.*)%}')
         self.regexContentEnd = re.compile('{%\s*end\s*%}')
         self.regexScript = re.compile('<script\s+type="text/python">')
         self.regexScriptEnd = re.compile('</script>')
-        self.regexValue = re.compile('({$\s*.*$})')
+        self.regexValue = re.compile('.*({\$\s*.*\$}).*\n')
         self.regexSpace = re.compile('\s+$')
 
     def tempFind(self, line):
@@ -95,7 +94,7 @@ class Template(object):
 
     def tempExecValue(self, line):
         """replace {$ ... $} with value"""
-        return line.replace(self.regexValue.sub(r'\1', line), self.value[self.tempFind(line)])
+        return line.replace(self.regexValue.sub(r'\1', line), self.temp_value[self.tempFind(line)])
 
     def tempExecScript(self, f):
         """execute script in html template"""
@@ -158,7 +157,7 @@ class Template(object):
             f1 = self.tempInclude(self.tempFind(line), f1)
             line = f1.readline()
         while line:
-            if self.regexValue.match(line): #replace value
+            if self.regexValue.search(line): #replace value
                 line = self.tempExecValue(line)
                 continue
             if self.regexScript.match(line): #execute script
@@ -178,5 +177,6 @@ class Template(object):
 
 def template(environ, tempfile, value={}):
     """find tempfile in template dirs which is defined in environ, 
-    parse template with value if given"""  
+    parse template with value if given"""
+    value.update({"user": environ.get("USER", "")})
     return Template(environ, tempfile, value).tempParse()
