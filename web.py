@@ -78,14 +78,14 @@ class Template(object):
     def tempRegex(self):
         """compile regular expression pattern"""
         signs = "#\$+%"
-        self.regex = re.compile('{[%s]+\s*(.*)[%s]+}' % (signs, signs))
-        self.regexInclude = re.compile('{#\s*(.*)#}')
-        self.regexDefine = re.compile('{\+\s*(.*)\+}')
-        self.regexContent = re.compile('{%\s*(.*)%}')
+        self.regex = re.compile('{[%s]+\s*([\w\.]+)\s*[%s]+}' % (signs, signs))
+        self.regexInclude = re.compile('{#\s*[\w\.]+\s*#}')
+        self.regexDefine = re.compile('{\+\s*\w+\s*\+}')
+        self.regexContent = re.compile('{%\s*\w+\s*%}')
         self.regexContentEnd = re.compile('{%\s*end\s*%}')
         self.regexScript = re.compile('<script\s+type="text/python">')
         self.regexScriptEnd = re.compile('</script>')
-        self.regexValue = re.compile('({\$\s*.*\$})')
+        self.regexValue = re.compile('({\$\s*\w+\s*\$})')
         self.regexSpace = re.compile('\s+$')
 
     def tempFind(self, line):
