@@ -27,7 +27,7 @@ def execute(environ, route, template=""):
     if app_path not in sys.path:
         sys.path.insert(0, app_path)
         environ["APP_PATH"] = app_path
-    if template and template not in environ["TEMP_PATH"]:
+    if os.path.isdir(template) and template not in environ["TEMP_PATH"]:
         environ["TEMP_PATH"].insert(0, template)
     #modules same name error fix
     #if app_module in sys.modules.keys():
@@ -70,7 +70,7 @@ class Template(object):
         """find template file from template dirs"""
         temp_file = ''
         for path in self.temp_path:
-            if tempfile in os.listdir(path):
+            if os.path.isdir(path) and tempfile in os.listdir(path):
                 temp_file = os.path.join(path, tempfile)
                 break
         return temp_file
@@ -184,3 +184,5 @@ def template(environ, tempfile, value={}):
     parse template with value if given"""
     value.update({"user": environ.get("USER", "")})
     return Template(environ, tempfile, value).tempParse()
+
+
