@@ -63,7 +63,8 @@ class Template(object):
     def tempPath(self, environ):
         """template dirs template under app dir and environ["TEMP_PATH"]"""
         temp_appdir = os.path.join(environ["APP_PATH"], "template")
-        environ["TEMP_PATH"].insert(-2, temp_appdir)
+        if os.path.isdir(temp_appdir):
+            environ["TEMP_PATH"].insert(-2, temp_appdir)
         return environ["TEMP_PATH"]
 
     def tempFile(self, tempfile):
