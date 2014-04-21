@@ -1,3 +1,5 @@
-from web import execute
-from web import template
-del web
+
+__version__ = "0.1"
+
+from core import execute
+from core import template
