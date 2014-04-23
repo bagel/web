@@ -52,7 +52,7 @@ def execute(environ, route, template=""):
         return execute(environ, ("app/public/",))
 
 
-class Template(object):
+class _Template(object):
     def __init__(self, environ, tempfile, value={}):
         self.temp_path = self.tempPath(environ)
         self.temp_file = self.tempFile(tempfile)
@@ -62,6 +62,8 @@ class Template(object):
 
     def tempPath(self, environ):
         """template dirs template under app dir and environ["TEMP_PATH"]"""
+        if not environ.has_key("APP_PATH") or not environ["APP_PATH"]:
+            return environ["TEMP_PATH"]
         temp_appdir = os.path.join(environ["APP_PATH"], "template")
         if os.path.isdir(temp_appdir):
             environ["TEMP_PATH"].insert(-2, temp_appdir)
@@ -70,6 +72,7 @@ class Template(object):
     def tempFile(self, tempfile):
         """find template file from template dirs"""
         temp_file = ''
+        print tempfile, self.temp_path
         for path in self.temp_path:
             if os.path.isdir(path) and tempfile in os.listdir(path):
                 temp_file = os.path.join(path, tempfile)
@@ -184,6 +187,28 @@ def template(environ, tempfile, value={}):
     """find tempfile in template dirs which is defined in environ, 
     parse template with value if given"""
     value.update({"user": environ.get("USER", "")})
-    return Template(environ, tempfile, value).tempParse()
+    return _Template(environ, tempfile, value).tempParse()
+
+
+def response(f):
+    """response decorator, return status, headers, body to wsgi"""
+    def _response(*args, **kwargs):
+        headers = {}
+        r = f(*args, **kwargs)
+        print f.func_name
+        if len(r) == 2:
+            ctype, response_body = r
+        elif len(r) == 3:
+            ctype, response_body, headers = r
+        response_headers = [('Content-Type', ctype), ('Content-Length', str(len(response_body)))]
+        regex_status = re.compile('Status', re.I)
+        status = "200 OK"
+        for k, v in headers.iteritems():
+            if regex_status.match(k):
+                status = v
+                continue
+            response_headers.append((k, v))
+        return (status, response_headers, response_body)
+    return _response
 
 
