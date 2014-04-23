@@ -2,6 +2,7 @@ import sys
 import os
 import re
 import cStringIO
+import yaml
 
 def execute(environ, route, template=""):
     """Eval function by route, route: {"/test": ("test", "response")},
@@ -24,9 +25,10 @@ def execute(environ, route, template=""):
     app_path = os.path.join(environ["DOCUMENT_ROOT"], app_dir)
     if environ["HTTP_HOST"] in sys.path[0]:
         sys.path.pop(0)
+    if app_path:
+        environ["APP_PATH"] = app_path
     if app_path not in sys.path:
         sys.path.insert(0, app_path)
-        environ["APP_PATH"] = app_path
     if os.path.isdir(template) and template not in environ["TEMP_PATH"]:
         environ["TEMP_PATH"].insert(0, template)
     #modules same name error fix
@@ -185,13 +187,13 @@ class _Template(object):
 
 def template(environ, tempfile, value={}):
     """find tempfile in template dirs which is defined in environ, 
-    parse template with value if given"""
+    parse template with value if given."""
     value.update({"user": environ.get("USER", "")})
     return _Template(environ, tempfile, value).tempParse()
 
 
 def response(f):
-    """response decorator, return status, headers, body to wsgi"""
+    """response decorator, return status, headers, body to wsgi."""
     def _response(*args, **kwargs):
         headers = {}
         r = f(*args, **kwargs)
@@ -210,5 +212,21 @@ def response(f):
             response_headers.append((k, v))
         return (status, response_headers, response_body)
     return _response
+
+def setenv(environ, conf="main.yaml"):
+    """set lib directory and environment"""
+    document_root = environ["DOCUMENT_ROOT"]
+    conf_file = os.path.join(document_root, "conf", conf)
+    with open(conf_file, 'r') as f:
+        env_init = yaml.load(f.read())
+    libs = env_init.get("lib", [])
+    for lib in libs:
+        lib = os.path.join(document_root, lib)
+        if os.path.isdir(lib) and lib not in sys.path:
+            sys.path.insert(0, lib)
+    envs = env_init.get("env", {})
+    for k, v in envs.iteritems():
+        environ[k] = str(v)
+    return environ
 
 
