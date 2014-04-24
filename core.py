@@ -213,20 +213,4 @@ def response(f):
         return (status, response_headers, response_body)
     return _response
 
-def setenv(environ, conf="main.yaml"):
-    """set lib directory and environment"""
-    document_root = environ["DOCUMENT_ROOT"]
-    conf_file = os.path.join(document_root, "conf", conf)
-    with open(conf_file, 'r') as f:
-        env_init = yaml.load(f.read())
-    libs = env_init.get("lib", [])
-    for lib in libs:
-        lib = os.path.join(document_root, lib)
-        if os.path.isdir(lib) and lib not in sys.path:
-            sys.path.insert(0, lib)
-    envs = env_init.get("env", {})
-    for k, v in envs.iteritems():
-        environ[k] = str(v)
-    return environ
-
 
