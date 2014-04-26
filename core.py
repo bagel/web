@@ -197,6 +197,7 @@ def response(f):
     def _response(*args, **kwargs):
         headers = {}
         r = f(*args, **kwargs)
+        print r
         print f.func_name
         if len(r) == 2:
             ctype, response_body = r

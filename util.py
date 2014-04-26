@@ -2,6 +2,7 @@ import sys
 import os
 import yaml
 import uwsgi
+import time
 
 def initenv(environ, conf="main.yaml"):
     """init environment and conf yaml into uwsgi cache"""
@@ -53,3 +54,12 @@ def cachefunc(expire=600):
         return __cachefunc
     return _cachefunc
 
+
+def timefunc(f):
+    """print the time that function f run use"""
+    def _timefunc(*args, **kwargs):
+        t = time.time()
+        r = f(*args, **kwargs)
+        print "%s: %s" % (f.func_name, time.time() - t)
+        return r
+    return _timefunc
