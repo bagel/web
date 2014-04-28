@@ -4,7 +4,6 @@ import json
 import core
 
 
-@core.response
 def errweb(errno):
     """error return with errno to web visitor"""
     errno = int(errno)
@@ -16,7 +15,6 @@ def errweb(errno):
         return (ctype, "Not found", {"Status": str(errno)})
 
 
-@core.response
 def errapi(errno):
     """error return with errno to api visitor"""
     errno = int(errno)
