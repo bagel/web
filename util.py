@@ -37,7 +37,7 @@ def timefunc(f):
 
 def logfunc(f):
     """log function print and run time to applogs by logging,
-    format:`logging time|remote_addr|user|level|function|message|request time`,
+    format: `logging time|remote_addr|user|level|function|message|run time`,
     sys.stdout log in INFO level, sys.stderr log in ERROR level,
     """
     def _logfunc(*args, **kwargs):
