@@ -5,6 +5,7 @@ import cStringIO
 import yaml
 import time
 import uwsgi
+import logging
 
 def execute(environ, route, template=""):
     """Eval function by route, route: {"/test": ("test", "response")},
@@ -217,21 +218,28 @@ def response(f):
     return _response
 
 def initenv(environ, conf="main.yaml"):
-    """init environment and conf yaml into uwsgi cache"""
+    """init env and conf yaml into uwsgi cache"""
     document_root = environ["DOCUMENT_ROOT"]
     conf_file = os.path.join(document_root, "conf", conf)
     with open(conf_file, 'r') as f:
         envs = yaml.load(f.read())
     for k, v in envs.iteritems():
-        uwsgi.cache_set(k, str(v))
+        setenv(k, str(v))
+        os.environ[k] = str(v)
+    for k, v in environ.iteritems():
+        os.environ[k] = str(v)
     return 0
 
 def setenv(k, v, expires=0):
-    """set env use uwsgi.cache_set"""
+    """set env use uwsgi.cache_set, delete if k exists before set"""
+    if extenv(k):
+        delenv(k)
     return uwsgi.cache_set(k, str(v), expires)
 
-def getenv(k):
+def getenv(k, v=None):
     """get env use uwsgi.cache_get"""
+    if not extenv(k):
+        return v
     v = uwsgi.cache_get(k)
     try:
         return eval(v, {}, {})
@@ -245,35 +253,4 @@ def delenv(k):
 def extenv(k):
     """check exists env use uwsgi.cache_exists"""
     return uwsgi.cache_exists(k)
-
-def cachefunc(expire=600):
-    """Cache function f return value in redis with `expire` time."""
-    def _cachefunc(f):
-        def __cachefunc(*args, **kwargs):
-            keys = ["func-", f.func_name]
-            keys.extend([ '-%s' % arg for arg in args ])
-            keys.extend([ '-%s--%s' % (k, v) for k, v in kwargs.iteritems() ])
-            key = ''.join(keys)
-            print key
-            if not extenv(key):
-                print "miss"
-                value = f(*args, **kwargs)
-                setenv(key, value, expire)
-                return value
-            else:
-                print "hit"
-                return getenv(key)
-        return __cachefunc
-    return _cachefunc
-
-
-def timefunc(f):
-    """print the time that function f run use"""
-    def _timefunc(*args, **kwargs):
-        t = time.time()
-        r = f(*args, **kwargs)
-        print "%s: %s" % (f.func_name, time.time() - t)
-        return r
-    return _timefunc
-
 

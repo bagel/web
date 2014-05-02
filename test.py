@@ -9,7 +9,7 @@ def template_test(value):
         ],
         "APP_PATH": "/data1/www/htdocs/admin.dpool.cluster.sina.com.cn/app/status"
     }
-    return core.template(environ, "status.html", value)
+    return core.template(environ, "high.html", value)
 
 def setenv_test():
     environ = {"DOCUMENT_ROOT": "/data1/www/htdocs/admin.dpool.cluster.sina.com.cn"}
@@ -17,6 +17,10 @@ def setenv_test():
     print sys.path
 
 
+def log_test(s):
+    core.log(s)
+
+
 if __name__ == "__main__":
-    #print template_test(value)
-    setenv_test()
+    print template_test(value)
+    #setenv_test()
