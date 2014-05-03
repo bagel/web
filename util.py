@@ -4,6 +4,8 @@ import time
 import core
 import logging
 import cStringIO
+import traceback
+import error
 
 def cachefunc(expire=600):
     """Cache function f return value in uwsgi cache with `expire` time."""
@@ -35,16 +37,16 @@ def timefunc(f):
         return r
     return _timefunc
 
-def logfunc(f):
+def tracefunc(f):
     """log function print and run time to applogs by logging,
     format: `logging time|remote_addr|user|level|function|message|run time`,
     sys.stdout log in INFO level, sys.stderr log in ERROR level,
     """
-    def _logfunc(*args, **kwargs):
+    def _tracefunc(*args, **kwargs):
         applogs_dir = core.getenv("APPLOGS_DIR")
         day = time.strftime("%Y%m%d")
         logfile = os.path.join(applogs_dir, day + '.log')
-        logformat = "%(asctime)s|%(clientip)s|%(user)s|%(levelname)s|%(funcname)s|%(message)s|%(rtime)s"
+        logformat = "%(asctime)s|%(clientip)s|%(rtime)s|%(user)s|%(levelname)s|%(funcname)s|%(message)s"
         logging.basicConfig(filename=logfile, format=logformat, 
                             datefmt="%Y/%m/%d %H:%M:%S", level=logging.DEBUG)
         log_info = cStringIO.StringIO()
@@ -53,20 +55,31 @@ def logfunc(f):
         log_error = cStringIO.StringIO()
         stderr_old = sys.stderr
         sys.stderr = log_error
+        log_trace = cStringIO.StringIO()
         t = time.time()
-        r = f(*args, **kwargs)
+        try:
+            r = f(*args, **kwargs)
+        except:
+            traceback.print_exc(file=log_trace)
         data = {
             "clientip": os.environ.get("REMOTE_ADDR", "null"),
             "user": os.environ.get("USER", "null"),
             "funcname": f.func_name,
             "rtime": "%dus" % int((time.time() - t) * 1000000),
         }
-        error = log_error.getvalue()
-        if error:
-            logging.error(error.replace('\n', '\\n'), extra=data)
+        err = log_error.getvalue()
+        if err:
+            logging.error(err.replace('\n', '\\n'), extra=data)
         sys.stderr = stderr_old
         info = log_info.getvalue()
         logging.info(info.replace('\n', '\\n'), extra=data)
         sys.stdout = stdout_old
+        trace = log_trace.getvalue()
+        if trace:
+            logging.error(trace, extra=data)
+            if int(core.getenv("debug")) == 1:
+                return error.error_response(500, trace)
+            else:
+                return error.error_response(500)
         return r
-    return _logfunc
+    return _tracefunc

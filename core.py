@@ -207,6 +207,8 @@ def response(f):
             ctype, response_body = r
         elif len(r) == 3:
             ctype, response_body, headers = r
+            if not isinstance(headers, dict):
+                return r
         response_headers = [('Content-Type', ctype), ('Content-Length', str(len(response_body)))]
         regex_status = re.compile('Status', re.I)
         status = "200 OK"
