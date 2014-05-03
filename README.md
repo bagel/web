@@ -4,6 +4,8 @@ web
 simple and lightweight python web framwork.
 
 
+##core
+
 #### web.execute
 
 	import web
@@ -20,8 +22,6 @@ simple and lightweight python web framwork.
 
 #### web.template
 
-	import web
-	
 	web.template(environ, "template.html", value={})
 
 
@@ -32,5 +32,11 @@ simple and lightweight python web framwork.
 	@web.response
 	def response(environ):
 	    return ("text/html", "response_body", {"Status": "403", ...})
+
+
+##util
+
+
+##error
 
 
