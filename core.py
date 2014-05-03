@@ -6,6 +6,7 @@ import yaml
 import time
 import uwsgi
 import logging
+import cPickle
 
 def execute(environ, route, template=""):
     """Eval function by route, route: {"/test": ("test", "response")},
@@ -77,7 +78,7 @@ class _Template(object):
     def tempFile(self, tempfile):
         """find template file from template dirs"""
         temp_file = ''
-        print tempfile, self.temp_path
+        #print tempfile, self.temp_path
         for path in self.temp_path:
             if os.path.isdir(path) and tempfile in os.listdir(path):
                 temp_file = os.path.join(path, tempfile)
@@ -228,23 +229,20 @@ def initenv(environ, conf="main.yaml"):
         os.environ[k] = str(v)
     for k, v in environ.iteritems():
         os.environ[k] = str(v)
+    os.environ["USER"] = ""
     return 0
 
 def setenv(k, v, expires=0):
     """set env use uwsgi.cache_set, delete if k exists before set"""
     if extenv(k):
         delenv(k)
-    return uwsgi.cache_set(k, str(v), expires)
+    return uwsgi.cache_set(k, cPickle.dumps(v), expires)
 
 def getenv(k, v=None):
     """get env use uwsgi.cache_get"""
     if not extenv(k):
         return v
-    v = uwsgi.cache_get(k)
-    try:
-        return eval(v, {}, {})
-    except:
-        return v
+    return cPickle.loads(uwsgi.cache_get(k))
 
 def delenv(k):
     """delete env use uwsgi.cache_del"""

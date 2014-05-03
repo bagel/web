@@ -6,21 +6,21 @@ import logging
 import cStringIO
 
 def cachefunc(expire=600):
-    """Cache function f return value in redis with `expire` time."""
+    """Cache function f return value in uwsgi cache with `expire` time."""
     def _cachefunc(f):
         def __cachefunc(*args, **kwargs):
             keys = ["func-", f.func_name]
             keys.extend([ '-%s' % arg for arg in args ])
             keys.extend([ '-%s--%s' % (k, v) for k, v in kwargs.iteritems() ])
             key = ''.join(keys)
-            print key
+            #print key
             if not core.extenv(key):
-                print "miss"
+                #print "miss"
                 value = f(*args, **kwargs)
                 core.setenv(key, value, expire)
                 return value
             else:
-                print "hit"
+                #print "hit"
                 return core.getenv(key)
         return __cachefunc
     return _cachefunc
@@ -45,11 +45,6 @@ def logfunc(f):
         day = time.strftime("%Y%m%d")
         logfile = os.path.join(applogs_dir, day + '.log')
         logformat = "%(asctime)s|%(clientip)s|%(user)s|%(levelname)s|%(funcname)s|%(message)s|%(rtime)s"
-        data = {
-            "clientip": os.environ["REMOTE_ADDR"], 
-            "user": os.environ["USER"],
-            "funcname": f.func_name,
-        }
         logging.basicConfig(filename=logfile, format=logformat, 
                             datefmt="%Y/%m/%d %H:%M:%S", level=logging.DEBUG)
         log_info = cStringIO.StringIO()
@@ -60,14 +55,18 @@ def logfunc(f):
         sys.stderr = log_error
         t = time.time()
         r = f(*args, **kwargs)
-        data["rtime"] = "%dus" % int((time.time() - t) * 1000000)
+        data = {
+            "clientip": os.environ.get("REMOTE_ADDR", "null"),
+            "user": os.environ.get("USER", "null"),
+            "funcname": f.func_name,
+            "rtime": "%dus" % int((time.time() - t) * 1000000),
+        }
         error = log_error.getvalue()
         if error:
             logging.error(error.replace('\n', '\\n'), extra=data)
         sys.stderr = stderr_old
         info = log_info.getvalue()
-        if not error or info:
-            logging.info(info.replace('\n', '\\n'), extra=data)
+        logging.info(info.replace('\n', '\\n'), extra=data)
         sys.stdout = stdout_old
         return r
     return _logfunc
