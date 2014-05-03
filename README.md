@@ -1,12 +1,17 @@
 web
 =====
 
-simple and lightweight python web framwork.
+Simple and lightweight python web framwork.
+
+This framwork need run with uwsgi.
 
 
 ##core
 
+
 #### web.execute
+
+Execute function by environ["PATH_INFO"] match key in route. If len(route[somepath]) == 1, then somepath.urls use. 
 
 	import web
 
