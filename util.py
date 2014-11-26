@@ -37,6 +37,7 @@ def timefunc(f):
         return r
     return _timefunc
 
+
 def tracefunc(f):
     """log function print and run time to applogs by logging,
     format: `logging time|remote_addr|user|level|function|message|run time`,
@@ -72,14 +73,12 @@ def tracefunc(f):
             logging.error(err.replace('\n', '\\n'), extra=data)
         sys.stderr = stderr_old
         info = log_info.getvalue()
-        logging.info(info.replace('\n', '\\n'), extra=data)
-        sys.stdout = stdout_old
         trace = log_trace.getvalue()
+        if (not err and not trace) or info:
+            logging.info(info.replace('\n', '\\n'), extra=data)
+        sys.stdout = stdout_old
         if trace:
             logging.error(trace, extra=data)
-            if int(core.getenv("debug")) == 1:
-                return error.error_response(500, trace)
-            else:
-                return error.error_response(500)
+            return error.error_response(500, trace=trace.replace('\n', '\\n'))
         return r
     return _tracefunc

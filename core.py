@@ -63,7 +63,6 @@ class _Template(object):
         self.temp_path = self.tempPath(environ)
         self.temp_file = self.tempFile(tempfile)
         self.temp_value = value
-        self.environ = environ
         self.tempRegex()
 
     def tempPath(self, environ):
@@ -227,7 +226,7 @@ def initenv(environ, conf="main.yaml"):
     with open(conf_file, 'r') as f:
         envs = yaml.load(f.read())
     for k, v in envs.iteritems():
-        setenv(k, str(v))
+        setenv(k, v)
         os.environ[k] = str(v)
     for k, v in environ.iteritems():
         os.environ[k] = str(v)
